@@ -1,39 +1,50 @@
 #!/usr/bin/python3
 """
-Markdown is awesome! All your README.md are made in Markdown,
-but do you know how Github are rendering them?
-It’s time to code a Markdown to HTML!
+A script that converts Markdown to HTML.
 """
-from sys import argv, stderr, exit
-from os import path
+
+import sys
+import os
+import re
+
+def convert_markdown_to_html(input_file, output_file):
+    """
+    Converts a Markdown file to HTML and writes the output to a file.
+    """
+    # Check that the Markdown file exists and is a file
+    if not (os.path.exists(input_file) and os.path.isfile(input_file)):
+        print(f"Missing {input_file}", file=sys.stderr)
+        sys.exit(1)
+
+    # Read the Markdown file and convert it to HTML
+    with open(input_file, encoding="utf-8") as f:
+        html_lines = []
+        for line in f:
+            # Check for Markdown headings
+            match = re.match(r"^(#+) (.*)$", line)
+            if match:
+                heading_level = len(match.group(1))
+                heading_text = match.group(2)
+                html_lines.append(f"<h{heading_level}>{heading_text}</h{heading_level}>")
+            else:
+                html_lines.append(line.rstrip())
+
+    # Write the HTML output to a file
+    with open(output_file, "w", encoding="utf-8") as f:
+        f.write("\n".join(html_lines))
+
 if __name__ == "__main__":
-    size = len(argv)
-    if size < 3:
-        print("Usage: ./markdown2html.py README.md README.html", file=stderr)
-        exit(1)
-    check = path.exists(argv[1])
-    if (check is False):
-        print("Missing {}".format(argv[1]), file=stderr)
-        exit(1)
-    with open(argv[1], 'r') as md:
-        mdlines = md.readlines()
-        _lines = []
-        ul = 0
-        for line in mdlines:
-            _list = line.split(' ')
-            _fchar = _list[0]
-            _ochars = ' '.join(_list[1:]).replace('\n', '')
-            if _fchar[0] == '#':
-                _lines.append('<h{0}>{1}</h{0}>\n'.
-                              format(len(_fchar), _ochars))
-            if _fchar[0] == '-':
-                ul += 1
-                if ul == 1:
-                    _lines.append('<ul>\n')
-                _lines.append('<li>{}</li>\n'.format(_ochars))
-            if ul > 0:
-                if _fchar[0] != '-' or line == mdlines[-1]:
-                    _lines.append('</ul>\n')
-    with open(argv[2], 'w') as html:
-        html.writelines(_lines)
-    exit(0)
+    # Check that the correct number of arguments were provided
+    if len(sys.argv) != 3:
+        print("Usage: ./markdown2html.py <input_file> <output_file>", file=sys.stderr)
+        sys.exit(1)
+
+    # Get the input and output file names from the command-line arguments
+    input_file = sys.argv[1]
+    output_file = sys.argv[2]
+
+    # Convert the Markdown file to HTML and write the output to a file
+    convert_markdown_to_html(input_file, output_file)
+
+    # Exit with a successful status code
+    sys.exit(0)
